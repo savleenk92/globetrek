@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GlobeTrek — Daily travel quiz and mystery city puzzle. Maintain your streak!">
+  <title>GlobeTrek — Daily Travel Puzzle</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-inner">
+    <a href="#" class="logo" onclick="showScreen('home')">Globe<span>Trek</span></a>
+    <div class="header-meta">
+      <div class="streak-badge" id="headerStreak">🔥 0</div>
+      <span id="headerDay" style="font-size:0.75rem;color:rgba(255,255,255,0.45)"></span>
+    </div>
+  </div>
+</header>
+
+<!-- Username Modal -->
+<div class="modal-overlay" id="usernameModal">
+  <div class="modal-box">
+    <div class="modal-title">✈️ Welcome to GlobeTrek</div>
+    <p class="modal-desc">Choose a display name for the leaderboard. You can always change it later.</p>
+    <input class="modal-input" id="usernameInput" type="text" placeholder="Your traveller name..." maxlength="20">
+    <button class="btn btn-primary btn-block" onclick="submitUsername()">Start Playing →</button>
+  </div>
+</div>
+
+<!-- Main content -->
+<main class="main" id="mainContent">
+
+  <!-- ═══════════ HOME SCREEN ═══════════ -->
+  <div id="screen-home" class="screen">
+    <div class="home-hero">
+      <div class="day-counter" id="homeDayCounter"></div>
+      <h1>Today's<br><em>Globe</em>Trek</h1>
+      <p>Guess the mystery city from clues, then tackle the daily travel quiz.</p>
+    </div>
+
+    <div class="mode-cards">
+      <div class="mode-card" id="puzzleCard" onclick="startPuzzle()">
+        <span class="mode-icon">🧩</span>
+        <span class="mode-label">City Puzzle</span>
+        <span class="mode-desc">Reveal clues one by one</span>
+      </div>
+      <div class="mode-card" id="quizCard" onclick="startQuiz()">
+        <span class="mode-icon">📚</span>
+        <span class="mode-label">Travel Quiz</span>
+        <span class="mode-desc">5 questions, timed</span>
+      </div>
+    </div>
+
+    <!-- Played today banner -->
+    <div id="playedBanner" style="display:none" class="played-today-msg">
+      <strong>🏆 You've completed today's GlobeTrek!</strong>
+      <div class="next-puzzle-timer">Next puzzle in: <span id="nextTimer">—</span></div>
+    </div>
+
+    <!-- Score summary if played -->
+    <div id="homeSummary" style="display:none" class="card">
+      <div class="card-title">📊 Today's Score</div>
+      <div class="score-breakdown" style="margin-top:12px">
+        <div class="score-item">
+          <div class="score-item-value" id="sumPuzzleScore">—</div>
+          <div class="score-item-label">Puzzle</div>
+        </div>
+        <div class="score-item">
+          <div class="score-item-value" id="sumQuizScore">—</div>
+          <div class="score-item-label">Quiz</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-block mt-12" onclick="showResults()">View Full Results</button>
+    </div>
+
+    <!-- Leaderboard preview -->
+    <div class="card">
+      <div class="card-title">🏆 Leaderboard</div>
+      <div class="card-subtitle">Today's top travellers</div>
+      <div id="leaderboardList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PUZZLE SCREEN ═══════════ -->
+  <div id="screen-puzzle" class="screen" style="display:none">
+    <div class="card">
+      <div class="card-title">🧩 Mystery City</div>
+      <div class="card-subtitle">Guess the city from clues — fewer clues used = higher score</div>
+
+      <div class="clue-progress" id="clueProgress"></div>
+      <div class="clues-list" id="cluesList"></div>
+
+      <div id="puzzleGuessArea">
+        <div class="attempts-left" id="attemptsLeft"></div>
+        <div class="guess-input-wrap">
+          <input class="guess-input" id="guessInput" type="text" placeholder="Name a city..." autocomplete="off" autocapitalize="words">
+          <button class="btn btn-primary" onclick="submitGuess()">→</button>
+        </div>
+        <button class="btn btn-secondary btn-block btn-sm" id="nextClueBtn" onclick="revealNextClue()" style="display:none">
+          Reveal next clue 🔍
+        </button>
+      </div>
+
+      <div class="feedback" id="puzzleFeedback"></div>
+
+      <div id="puzzleDone" style="display:none">
+        <button class="btn btn-primary btn-block" onclick="finishPuzzleAndQuiz()">Continue to Quiz →</button>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary btn-sm" onclick="showScreen('home')" style="margin-top:4px">← Back</button>
+  </div>
+
+  <!-- ═══════════ QUIZ SCREEN ═══════════ -->
+  <div id="screen-quiz" class="screen" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div class="card-title" style="margin-bottom:0">📚 Travel Quiz</div>
+        <div class="q-counter" id="qCounter">Q 1 / 5</div>
+      </div>
+
+      <div class="quiz-timer">
+        <span class="timer-text" id="timerText">15s</span>
+        <span class="timer-text" id="quizScore">Score: 0</span>
+      </div>
+      <div class="timer-bar-wrap">
+        <div class="timer-bar" id="timerBar"></div>
+      </div>
+
+      <div class="quiz-question" id="quizQuestion"></div>
+
+      <div class="options-grid" id="optionsGrid"></div>
+
+      <div class="feedback" id="quizFeedback"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ RESULTS SCREEN ═══════════ -->
+  <div id="screen-results" class="screen" style="display:none">
+    <div class="result-hero" id="resultHero">
+      <div class="result-label">Total Score</div>
+      <div class="result-score-big" id="resultTotal">0</div>
+      <div class="result-city" id="resultCity"></div>
+    </div>
+
+    <div class="score-breakdown">
+      <div class="score-item">
+        <div class="score-item-value" id="rPuzzleScore">—</div>
+        <div class="score-item-label">🧩 Puzzle</div>
+        <div class="emoji-row" id="rPuzzleEmoji"></div>
+      </div>
+      <div class="score-item">
+        <div class="score-item-value" id="rQuizScore">—</div>
+        <div class="score-item-label">📚 Quiz</div>
+        <div class="emoji-row" id="rQuizEmoji"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title mb-8">Share your result</div>
+      <div class="share-box" id="shareBox"></div>
+      <button class="btn btn-primary btn-block" id="shareBtn" onclick="handleShare()">
+        📤 Copy & Share
+      </button>
+      <div class="text-center mt-8 text-muted" id="shareCopied" style="display:none">✓ Copied to clipboard!</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏆 Leaderboard</div>
+      <div id="resultsLeaderboard"></div>
+    </div>
+
+    <button class="btn btn-navy btn-block mt-12" onclick="showScreen('home')">← Back to Home</button>
+  </div>
+
+</main>
+
+<!-- Scripts -->
+<script src="js/puzzles.js"></script>
+<script src="js/questions.js"></script>
+<script src="js/streak.js"></script>
+<script src="js/share.js"></script>
+<script>
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let puzzleState = {
+  puzzle: null,
+  cluesRevealed: 0,
+  guessCount: 0,
+  solved: false,
+  failed: false,
+  score: null,
+};
+let quizState = {
+  questions: [],
+  current: 0,
+  score: 0,
+  answers: [],
+  timerInterval: null,
+  timeLeft: 15,
+};
+let sessionResult = null; // final combined result
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  updateHeaderStreak();
+  updateDayCounter();
+  checkUsername();
+  renderLeaderboard('leaderboardList');
+  checkPlayedToday();
+  updateModeCards();
+
+  // Enter key for guess
+  document.getElementById('guessInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitGuess();
+  });
+  // Enter key for username
+  document.getElementById('usernameInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitUsername();
+  });
+
+  startNextTimer();
+});
+
+function checkUsername() {
+  if (!getUsername()) {
+    document.getElementById('usernameModal').classList.add('open');
+  }
+}
+
+function submitUsername() {
+  const val = document.getElementById('usernameInput').value.trim();
+  if (!val) return;
+  setUsername(val);
+  document.getElementById('usernameModal').classList.remove('open');
+}
+
+function updateDayCounter() {
+  const epoch = new Date('2025-01-01');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const day = Math.floor((today - epoch) / 86400000) + 1;
+  const opts = { weekday: 'long', month: 'long', day: 'numeric' };
+  const dateStr = new Date().toLocaleDateString('en-US', opts);
+  document.getElementById('headerDay').textContent = '#' + day;
+  document.getElementById('homeDayCounter').textContent = dateStr + ' · Day #' + day;
+}
+
+function updateHeaderStreak() {
+  const s = getStreak();
+  const el = document.getElementById('headerStreak');
+  el.textContent = (s.count >= 3 ? '🔥' : '✈️') + ' ' + (s.count || 0);
+}
+
+function checkPlayedToday() {
+  const saved = getSavedResult();
+  const banner = document.getElementById('playedBanner');
+  const summary = document.getElementById('homeSummary');
+  if (saved) {
+    banner.style.display = 'block';
+    summary.style.display = 'block';
+    document.getElementById('sumPuzzleScore').textContent = saved.puzzleScore;
+    document.getElementById('sumQuizScore').textContent = saved.quizScore;
+    sessionResult = saved;
+  } else {
+    banner.style.display = 'none';
+    summary.style.display = 'none';
+  }
+}
+
+function updateModeCards() {
+  const saved = getSavedResult();
+  if (!saved) return;
+  // Both done
+  document.getElementById('puzzleCard').classList.add('done');
+  document.getElementById('quizCard').classList.add('done');
+}
+
+// ═══════════════════════════════════════════════
+// SCREEN ROUTING
+// ═══════════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+  document.getElementById('screen-' + name).style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function showResults() {
+  if (!sessionResult) return;
+  renderResults(sessionResult);
+  showScreen('results');
+}
+
+// ═══════════════════════════════════════════════
+// PUZZLE ENGINE
+// ═══════════════════════════════════════════════
+function startPuzzle() {
+  if (hasPlayedToday()) { showResults(); return; }
+
+  puzzleState = {
+    puzzle: getTodaysPuzzle(),
+    cluesRevealed: 1,
+    guessCount: 0,
+    solved: false,
+    failed: false,
+    score: null,
+  };
+
+  renderPuzzle();
+  showScreen('puzzle');
+  document.getElementById('guessInput').focus();
+}
+
+function renderPuzzle() {
+  const { puzzle, cluesRevealed, guessCount, solved, failed } = puzzleState;
+  const maxClues = puzzle.clues.length;
+  const maxGuesses = 3;
+
+  // Progress dots
+  const prog = document.getElementById('clueProgress');
+  prog.innerHTML = puzzle.clues.map((_, i) => {
+    let cls = 'clue-dot';
+    if (i < cluesRevealed) cls += solved ? ' active' : (failed && i < cluesRevealed ? ' revealed' : ' revealed');
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  // Clues list
+  const list = document.getElementById('cluesList');
+  list.innerHTML = puzzle.clues.slice(0, cluesRevealed).map((clue, i) =>
+    `<div class="clue-item"><span class="clue-num">${i+1}</span><span>${clue}</span></div>`
+  ).join('');
+
+  // Attempts left
+  document.getElementById('attemptsLeft').textContent =
+    `${maxGuesses - guessCount} guess${maxGuesses - guessCount !== 1 ? 'es' : ''} remaining · Clue ${cluesRevealed} of ${maxClues}`;
+
+  // Next clue button
+  const nextBtn = document.getElementById('nextClueBtn');
+  nextBtn.style.display = (cluesRevealed < maxClues && !solved && !failed) ? 'block' : 'none';
+
+  // Done area
+  document.getElementById('puzzleDone').style.display = (solved || failed) ? 'block' : 'none';
+  document.getElementById('puzzleGuessArea').style.display = (solved || failed) ? 'none' : 'block';
+}
+
+function submitGuess() {
+  const input = document.getElementById('guessInput');
+  const guess = input.value.trim();
+  if (!guess) return;
+
+  const { puzzle } = puzzleState;
+  const maxGuesses = 3;
+
+  puzzleState.guessCount++;
+  input.value = '';
+
+  const correct = guess.toLowerCase().includes(puzzle.city.toLowerCase()) ||
+                  puzzle.city.toLowerCase().includes(guess.toLowerCase().split(',')[0].trim());
+
+  const fb = document.getElementById('puzzleFeedback');
+  fb.className = 'feedback show';
+
+  if (correct) {
+    puzzleState.solved = true;
+    // Score: 500 for first clue, -100 per extra clue used
+    puzzleState.score = Math.max(100, 500 - (puzzleState.cluesRevealed - 1) * 100);
+    fb.className += ' correct';
+    fb.textContent = `✓ Correct! That's ${puzzle.city}, ${puzzle.country} ${puzzle.emoji}`;
+    renderPuzzle();
+  } else {
+    const guessesLeft = maxGuesses - puzzleState.guessCount;
+    if (guessesLeft <= 0) {
+      // Auto-reveal all clues and fail
+      puzzleState.cluesRevealed = puzzle.clues.length;
+      puzzleState.failed = true;
+      puzzleState.score = 0;
+      fb.className += ' fail';
+      fb.textContent = `✗ The answer was ${puzzle.city}, ${puzzle.country} ${puzzle.emoji}`;
+      renderPuzzle();
+    } else {
+      fb.className += ' wrong';
+      fb.textContent = `✗ Not quite. ${guessesLeft} guess${guessesLeft !== 1 ? 'es' : ''} left.`;
+      // Auto-reveal next clue after a wrong guess (if available)
+      if (puzzleState.cluesRevealed < puzzle.clues.length) {
+        setTimeout(() => {
+          puzzleState.cluesRevealed++;
+          renderPuzzle();
+        }, 800);
+      }
+    }
+  }
+}
+
+function revealNextClue() {
+  if (puzzleState.cluesRevealed < puzzleState.puzzle.clues.length) {
+    puzzleState.cluesRevealed++;
+    renderPuzzle();
+    clearFeedback('puzzleFeedback');
+  }
+}
+
+function clearFeedback(id) {
+  const el = document.getElementById(id);
+  el.className = 'feedback';
+}
+
+function finishPuzzleAndQuiz() {
+  startQuiz();
+}
+
+// ═══════════════════════════════════════════════
+// QUIZ ENGINE
+// ═══════════════════════════════════════════════
+function startQuiz() {
+  if (hasPlayedToday()) { showResults(); return; }
+
+  quizState = {
+    questions: getDailyQuestions(),
+    current: 0,
+    score: 0,
+    answers: [],
+    timerInterval: null,
+    timeLeft: 15,
+  };
+
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const { questions, current, score } = quizState;
+  const q = questions[current];
+
+  document.getElementById('qCounter').textContent = `Q ${current + 1} / ${questions.length}`;
+  document.getElementById('quizScore').textContent = `Score: ${score}`;
+  document.getElementById('quizQuestion').textContent = q.q;
+  document.getElementById('quizFeedback').className = 'feedback';
+
+  const letters = ['A', 'B', 'C', 'D'];
+  document.getElementById('optionsGrid').innerHTML = q.options.map((opt, i) =>
+    `<button class="option-btn" id="opt-${i}" onclick="selectAnswer(${i})">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${opt}</span>
+    </button>`
+  ).join('');
+
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(quizState.timerInterval);
+  quizState.timeLeft = 15;
+  updateTimerBar(15, 15);
+
+  quizState.timerInterval = setInterval(() => {
+    quizState.timeLeft--;
+    updateTimerBar(quizState.timeLeft, 15);
+    if (quizState.timeLeft <= 0) {
+      clearInterval(quizState.timerInterval);
+      selectAnswer(-1); // time out
+    }
+  }, 1000);
+}
+
+function updateTimerBar(t, max) {
+  const bar = document.getElementById('timerBar');
+  const txt = document.getElementById('timerText');
+  const pct = (t / max) * 100;
+  bar.style.width = pct + '%';
+  bar.className = 'timer-bar' + (t <= 5 ? ' urgent' : '');
+  txt.textContent = t + 's';
+}
+
+function selectAnswer(chosen) {
+  clearInterval(quizState.timerInterval);
+
+  const { questions, current, timeLeft } = quizState;
+  const q = questions[current];
+  const correct = q.answer;
+  const isCorrect = chosen === correct;
+
+  quizState.answers.push(isCorrect);
+
+  // Highlight answers
+  document.querySelectorAll('.option-btn').forEach(btn => btn.disabled = true);
+  if (chosen >= 0) {
+    document.getElementById('opt-' + chosen).classList.add(isCorrect ? 'correct' : 'wrong');
+  }
+  if (!isCorrect && correct >= 0) {
+    document.getElementById('opt-' + correct).classList.add('correct');
+  }
+
+  // Score: 100 base + up to 50 speed bonus
+  if (isCorrect) {
+    const speedBonus = Math.round((timeLeft / 15) * 50);
+    quizState.score += 100 + speedBonus;
+    const fb = document.getElementById('quizFeedback');
+    fb.className = 'feedback show correct';
+    fb.textContent = `✓ Correct! +${100 + speedBonus}pts`;
+  } else {
+    const fb = document.getElementById('quizFeedback');
+    fb.className = 'feedback show ' + (chosen === -1 ? 'wrong' : 'fail');
+    fb.textContent = chosen === -1 ? '⏰ Time's up!' : `✗ The answer was: ${q.options[correct]}`;
+  }
+
+  document.getElementById('quizScore').textContent = `Score: ${quizState.score}`;
+
+  setTimeout(() => {
+    quizState.current++;
+    if (quizState.current < quizState.questions.length) {
+      renderQuestion();
+    } else {
+      finishGame();
+    }
+  }, 1500);
+}
+
+// ═══════════════════════════════════════════════
+// FINISH & RESULTS
+// ═══════════════════════════════════════════════
+function finishGame() {
+  const puzzleScore = puzzleState.score !== null ? puzzleState.score : 0;
+  const quizScore = quizState.score;
+  const totalScore = puzzleScore + quizScore;
+  const cluesUsed = puzzleState.solved ? puzzleState.cluesRevealed : null;
+
+  const result = {
+    puzzleScore,
+    quizScore,
+    totalScore,
+    puzzleCluesUsed: cluesUsed,
+    puzzleSolved: puzzleState.solved,
+    puzzleCity: puzzleState.puzzle ? puzzleState.puzzle.city : '?',
+    quizAnswers: quizState.answers,
+    date: getTodayStr(),
+  };
+
+  saveResult(result);
+  updateStreak();
+  updateHeaderStreak();
+  submitToLeaderboard(result);
+
+  sessionResult = result;
+  checkPlayedToday();
+  updateModeCards();
+  renderResults(result);
+  showScreen('results');
+}
+
+function renderResults(result) {
+  document.getElementById('resultTotal').textContent = result.totalScore;
+
+  const puzzle = getTodaysPuzzle();
+  document.getElementById('resultCity').textContent =
+    (result.puzzleSolved ? '✓ ' : '✗ ') + puzzle.city + ' ' + puzzle.emoji + ', ' + puzzle.country;
+
+  document.getElementById('rPuzzleScore').textContent = result.puzzleScore;
+  document.getElementById('rQuizScore').textContent = result.quizScore;
+
+  // Emoji grids
+  if (result.puzzleCluesUsed !== null) {
+    document.getElementById('rPuzzleEmoji').textContent =
+      Array.from({ length: 5 }, (_, i) => i < result.puzzleCluesUsed ? '🟥' : '🟩').join('');
+  } else {
+    document.getElementById('rPuzzleEmoji').textContent = '🟥🟥🟥🟥🟥';
+  }
+
+  if (result.quizAnswers) {
+    document.getElementById('rQuizEmoji').textContent =
+      result.quizAnswers.map(a => a ? '🟩' : '🟥').join('');
+  }
+
+  // Share text
+  document.getElementById('shareBox').textContent = generateShareText(result);
+
+  renderLeaderboard('resultsLeaderboard');
+}
+
+async function handleShare() {
+  const wasCopied = !(await shareResult(sessionResult));
+  const copiedEl = document.getElementById('shareCopied');
+  copiedEl.style.display = 'block';
+  copiedEl.textContent = wasCopied ? '✓ Copied to clipboard!' : '✓ Shared!';
+  setTimeout(() => copiedEl.style.display = 'none', 2500);
+}
+
+// ═══════════════════════════════════════════════
+// LEADERBOARD (localStorage-based)
+// ═══════════════════════════════════════════════
+function getLeaderboard() {
+  try {
+    return JSON.parse(localStorage.getItem('gt_lb_' + getTodayStr()) || '[]');
+  } catch { return []; }
+}
+
+function submitToLeaderboard(result) {
+  const lb = getLeaderboard();
+  const username = getUsername() || 'Traveller';
+  const streak = getStreak();
+  // Remove old entry for this user today
+  const filtered = lb.filter(e => e.name !== username);
+  filtered.push({
+    name: username,
+    score: result.totalScore,
+    streak: streak.count,
+    puzzleScore: result.puzzleScore,
+    quizScore: result.quizScore,
+  });
+  filtered.sort((a, b) => b.score - a.score);
+  localStorage.setItem('gt_lb_' + getTodayStr(), JSON.stringify(filtered.slice(0, 50)));
+}
+
+function renderLeaderboard(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const lb = getLeaderboard();
+  const me = getUsername();
+
+  if (lb.length === 0) {
+    container.innerHTML = '<div class="lb-empty">No scores yet today.<br>Be the first to play!</div>';
+    return;
+  }
+
+  container.innerHTML = lb.slice(0, 10).map((entry, i) => {
+    const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+    const isYou = entry.name === me;
+    return `<div class="lb-row">
+      <div class="lb-rank">${rankEmoji}</div>
+      <div class="lb-name">${escapeHtml(entry.name)}${isYou ? '<span class="lb-you">YOU</span>' : ''}</div>
+      <div class="lb-streak">🔥${entry.streak}</div>
+      <div class="lb-score">${entry.score}pts</div>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ═══════════════════════════════════════════════
+// NEXT PUZZLE TIMER
+// ═══════════════════════════════════════════════
+function startNextTimer() {
+  function update() {
+    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setHours(24, 0, 0, 0);
+    const diff = tomorrow - now;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    const el = document.getElementById('nextTimer');
+    if (el) el.textContent = `${h}h ${m}m ${s}s`;
+  }
+  update();
+  setInterval(update, 1000);
+}
+
+</script>
+</body>
+</html>
